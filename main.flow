@@ -1,0 +1,21 @@
+import parser;
+import string;
+
+main() {
+    t = str2Prog("
+    var x: int;
+    var y: int;
+
+    {
+        x = 10;
+        y = 2;
+
+        if(x < y) then {
+            print(x);
+        } else {
+            print(y);
+        }
+    }");
+    
+    println("Prog tree: " + toString(t));
+}

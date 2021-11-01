@@ -1,0 +1,41 @@
+program = decl*:d oper:o { Prog(:d, :o) };
+
+// Types
+decl = ws "var" ws letters$l ws ":" ws type:t ws ";" ws { VarDecl($l, :t) };
+type  = Int | Array;
+Int = ws "int" ws { IntType() };
+Array = ws "[" type:t "]" ws { ArrayType(:t) };
+
+// Operations
+oper = cond | seq | choice | loop | assign | print | while | ifelse;
+cond = ws "(" expr:l logOp$o expr:r ")" ws "?" ws { CondOper($o, :l, :r) };
+
+seq = ws "{" oper:l sem_seq*:o "}" ws { seqSemanticAct(:l, :o) };
+sem_seq = ws ";" oper;
+
+choice = ws "{" oper:l sem_choice*:o "}" ws { choiceSemanticAct(:l, :o) };
+sem_choice = ws "U" oper;
+
+loop = ws "(" oper:o ws ")" ws "*" ws { LoopOper(:o) };
+print = ws "print" ws "(" expr:e ")" ws { PrintOper(:e) };
+assign = var:v "=" expr:e { AssignOper(:v, :e) };
+
+ifelse = ws "if" ws "(" expr:l logOp$o expr:r ")"
+    ws "then" ws oper:po ws "else" oper:no ws { ifelseSemanticAct($o, :l, :r, :po, :no) };
+while = ws "while" ws "(" expr:l logOp$o expr:r ")"
+    ws "do" ws oper:b ws { whileSemanticAct($o, :l, :r, :b) };
+
+// Expressions
+expr = const | var | binop;
+const = ws digits$d ws { ConstExpr(s2i($d)) };
+var = ws letters$l ws { VarExpr($l) };
+binop = ws "(" expr:l arithmeticOp$s expr:r ")" ws { BinOpExpr($s, :l, :r) };
+
+// Base
+digits = ('0'-'9')+;
+letters = ('a'-'z')+;
+logOp = ("==" | "<=" | ">=" | "<" | ">" | "!=");
+arithmeticOp = ("+" | "*" | "/" | "-" | "%");
+
+// Whitespace
+ws = (' ' | '\t' | '\n' | '\r')*;
