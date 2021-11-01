@@ -10,11 +10,11 @@ Array = ws "[" type:t "]" ws { ArrayType(:t) };
 oper = cond | seq | choice | loop | assign | print | while | ifelse;
 cond = ws "(" expr:l logOp$o expr:r ")" ws "?" ws { CondOper($o, :l, :r) };
 
-seq = ws "{" oper:l sem_seq*:o "}" ws { seqSemanticAct(:l, :o) };
-sem_seq = ws ";" oper;
+seq = ws "{" oper:l semSeq*:o "}" ws { seqSemanticAct(:l, :o) };
+semSeq = ws ";" oper;
 
-choice = ws "{" oper:l sem_choice*:o "}" ws { choiceSemanticAct(:l, :o) };
-sem_choice = ws "U" oper;
+choice = ws "{" oper:l semChoice*:o "}" ws { choiceSemanticAct(:l, :o) };
+semChoice = ws "U" oper;
 
 loop = ws "(" oper:o ws ")" ws "*" ws { LoopOper(:o) };
 print = ws "print" ws "(" expr:e ")" ws { PrintOper(:e) };

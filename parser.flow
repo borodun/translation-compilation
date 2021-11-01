@@ -97,7 +97,7 @@ oper2str(o: Oper) -> string {
     }
 }
 
-printProgStruct(p: Prog) -> void {
+prog2str(p: Prog) -> void {
     iter(p.decls, \v -> println("var " + v.name + ": " + type2str(v.type)  + ";"));
     println(oper2str(p.operators));
 }
