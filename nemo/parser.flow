@@ -5,10 +5,12 @@ export {
     IntType();
     ArrayType(type: Type);
 
-    Expr ::= BinOpExpr, ConstExpr, VarExpr;
+    Expr ::= BinOpExpr, ConstExpr, VarExpr, AppExpr, UpdExpr;
     BinOpExpr(op: string, le: Expr, re: Expr);
     ConstExpr(val: int);
     VarExpr(name: string);
+    AppExpr(ae: Expr, ie: Expr);
+    UpdExpr(ae: Expr, ie: Expr, ve: Expr);
 
     Oper ::= CondOper, SeqOper, PrintOper, AssignOper, ChoiceOper, LoopOper;
     CondOper(op: string, le: Expr, re: Expr);
@@ -22,14 +24,16 @@ export {
 
     Prog(decls: [VarDecl], operators: Oper);
 
-    str2Prog(s: string) -> Prog;
+    str2prog(s: string) ->Maybe<Prog>;
+    printProg(p: Prog) -> void;
+    prog2str(p: Prog) -> string;
 }
 
-seqSemanticAct(xs: [flow]) -> SeqOper {
+seqSemAct(xs: [flow]) -> SeqOper {
     SeqOper(concat([xs[0]], xs[1]))
 }
 
-choiceSemanticAct(xs: [flow]) -> ChoiceOper {
+choiceSemAct(xs: [flow]) -> ChoiceOper {
     ChoiceOper(concat([xs[0]], xs[1]))
 }
 
@@ -43,32 +47,33 @@ negoper(o: string) -> string {
     else o
 }
 
-ifelseSemanticAct(xs: [flow]) -> ChoiceOper {
+ifelseSemAct(xs: [flow]) -> ChoiceOper {
     ChoiceOper([SeqOper([CondOper(xs[0], xs[1], xs[2]), xs[3]]),
         SeqOper([CondOper(negoper(xs[0]), xs[1], xs[2]), xs[4]])])
 }
 
-whileSemanticAct(xs: [flow]) -> SeqOper {
+whileSemAct(xs: [flow]) -> SeqOper {
     SeqOper([LoopOper(SeqOper([CondOper(xs[0], xs[1], xs[2]), xs[3]])),
         CondOper(negoper(xs[0]), xs[1], xs[2])])
 }
 
-str2Prog(s: string) -> Prog {
-    specialPegActions = {
-        t1 = setTree(defaultPegActions.t, "seqSemanticAct", seqSemanticAct);
-        t2 = setTree(t1, "choiceSemanticAct", choiceSemanticAct);
-        t3 = setTree(t2, "ifelseSemanticAct", ifelseSemanticAct);
-        t4 = setTree(t3, "whileSemanticAct", whileSemanticAct);
+str2prog(s: string) -> Maybe<Prog> {
+    pegActions = {
+        t1 = setTree(defaultPegActions.t, "seqSemAct", seqSemAct);
+        t2 = setTree(t1, "choiceSemAct", choiceSemAct);
+        t3 = setTree(t2, "ifelseSemAct", ifelseSemAct);
+        t4 = setTree(t3, "whileSemAct", whileSemAct);
         SemanticActions(t4);
     }
-    gram = "#include nemo.lingo";
-    parsic(compilePegGrammar(gram), s, specialPegActions);
-    // if (result.third == "") {
-    //     result.first;
-    // }
-    // else{ 
-    //     println("Error: " + result.third)
-    // }
+    gram = "#include nemo/nemo.lingo";
+    result = parsic3(compilePegGrammar(gram), s, pegActions, Prog([VarDecl("x", IntType())], AssignOper(VarExpr("x"), ConstExpr(0))));
+    if (result.third == "") {
+        Some(result.first);
+    }
+    else{ 
+        println("Error: " + result.third);
+        None();
+    }
 }
 
 type2str(t: Type) -> string {
@@ -83,6 +88,8 @@ expr2str(e: Expr) -> string {
         BinOpExpr(op, le, re): "(" + expr2str(le) + op + expr2str(re) + ")"
         ConstExpr(v): i2s(v)
         VarExpr(name): name
+        AppExpr(ae, ie): "app(" + expr2str(ae) + "," + expr2str(ie) + ")"
+        UpdExpr(ae, ie, ve): "upd(" + expr2str(ae) + "," + expr2str(ie) + "," + expr2str(ve) + ")"
     }
 }
 
@@ -92,12 +99,18 @@ oper2str(o: Oper) -> string {
         PrintOper(e): "print(" + expr2str(e) + ")"
         AssignOper(var, val): "(" + expr2str(var) + " = " + expr2str(val) + ")"
         LoopOper(l): oper2str(l) + "*"
-        SeqOper(s): "{" + fold(s, "", \ acc, v -> acc + "; " + oper2str(v)) + "}"
+        SeqOper(s): "{" + fold(s, "", \ acc, v -> acc + ";\n" + oper2str(v)) + "}"
         ChoiceOper(c): "{" + fold(c, "", \ acc, v -> acc + " U " + oper2str(v)) + "}"
     }
 }
 
-prog2str(p: Prog) -> void {
+printProg(p: Prog) -> void {
     iter(p.decls, \v -> println("var " + v.name + ": " + type2str(v.type)  + ";"));
     println(oper2str(p.operators));
+}
+
+prog2str(p: Prog) -> string {
+    fold(p.decls, "", \ acc, v -> { acc + "var " + v.name + ": " + type2str(v.type)  + ";\n" })
+    +
+    oper2str(p.operators)
 }

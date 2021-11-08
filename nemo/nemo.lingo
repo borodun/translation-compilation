@@ -7,29 +7,32 @@ Int = ws "int" ws { IntType() };
 Array = ws "[" type:t "]" ws { ArrayType(:t) };
 
 // Operations
-oper = cond | seq | choice | loop | assign | print | while | ifelse;
-cond = ws "(" expr:l logOp$o expr:r ")" ws "?" ws { CondOper($o, :l, :r) };
+oper = cond | assign | print | ifelse | while | seq | choice | loop ;
 
-seq = ws "{" oper:l semSeq*:o "}" ws { seqSemanticAct(:l, :o) };
+cond = ws "(" expr:l logOp$o expr:r ")" ws "?" ws { CondOper($o, :l, :r) };
+assign = var:v "=" expr:e { AssignOper(:v, :e) };
+print = ws "print" ws "(" expr:e ")" ws { PrintOper(:e) };
+
+ifelse = ws "if" ws "(" expr:l logOp$o expr:r ")"
+    ws "then" ws oper:po ws "else" oper:no ws { ifelseSemAct($o, :l, :r, :po, :no) };
+while = ws "while" ws "(" expr:l logOp$o expr:r ")"
+    ws "do" ws oper:b ws { whileSemAct($o, :l, :r, :b) };
+
+seq = ws "{" oper:l semSeq*:o "}" ws { seqSemAct(:l, :o) };
 semSeq = ws ";" oper;
 
-choice = ws "{" oper:l semChoice*:o "}" ws { choiceSemanticAct(:l, :o) };
+choice = ws "{" oper:l semChoice*:o "}" ws { choiceSemcAct(:l, :o) };
 semChoice = ws "U" oper;
 
 loop = ws "(" oper:o ws ")" ws "*" ws { LoopOper(:o) };
-print = ws "print" ws "(" expr:e ")" ws { PrintOper(:e) };
-assign = var:v "=" expr:e { AssignOper(:v, :e) };
-
-ifelse = ws "if" ws "(" expr:l logOp$o expr:r ")"
-    ws "then" ws oper:po ws "else" oper:no ws { ifelseSemanticAct($o, :l, :r, :po, :no) };
-while = ws "while" ws "(" expr:l logOp$o expr:r ")"
-    ws "do" ws oper:b ws { whileSemanticAct($o, :l, :r, :b) };
 
 // Expressions
-expr = const | var | binop;
+expr = const | var | binop | app | upd;
 const = ws digits$d ws { ConstExpr(s2i($d)) };
 var = ws letters$l ws { VarExpr($l) };
 binop = ws "(" expr:l arithmeticOp$s expr:r ")" ws { BinOpExpr($s, :l, :r) };
+app  = ws "(" ws "app" ws "(" expr:l "," expr:r ")" ws ")" ws { AppExpr(:l, :r) };
+upd = ws "(" ws "upd" ws "(" expr:l "," expr:m "," expr:r ")" ws ")" ws { UpdExpr(:l, :m, :r) };
 
 // Base
 digits = ('0'-'9')+;
