@@ -9,7 +9,7 @@ main() {
     var n: int;
 
     {
-        n = 25;
+        n = 30;
         i = 2;
 
         x = (upd(x, 0, 0));
@@ -27,9 +27,9 @@ main() {
         }
     }");
 
-    switch (tree: Maybe<Prog>) {
+    switch (tree: Maybe<NemoProg>) {
         Some(t): {
-            println("Prog tree: " +  prog2str(t));
+            println("Prog: " + prog2str(t));
         };
         None(): {
             println("None");

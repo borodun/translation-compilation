@@ -7,6 +7,7 @@ export {
     Type ::= Int, Array;
     Int();
     Array(type: Type);
+    Mark(val: int);
 
     Expr ::= BinOp, Const, App, Upd, Var;
     BinOp(op: string, le: Expr, re: Expr);
@@ -15,15 +16,13 @@ export {
     Const(val: int);
     Var(name: string);
 
-    Oper ::= CondOper, PrintOper, AssignOper;
+    Oper ::= IfElse, Print, Assign;
     CondOp(op: string, le: Expr, re: Expr);
-    CondOper(label: int, cond: CondOp, ll: [UtilityInt], lr: [UtilityInt]);
-    PrintOper(label: int, e: Expr, labels: [UtilityInt]);
-    AssignOper(label: int, var: Var, val: Expr, labels: [UtilityInt]);
+    IfElse(mark: int, cond: CondOp, lm: [Mark], rm: [Mark]);
+    Print(mark: int, e: Expr, marks: [Mark]);
+    Assign(mark: int, var: Var, val: Expr, marks: [Mark]);
 
     VarDecl(name: string, type: Type);
-
-    UtilityInt(val: int);
 
     Prog(decls: [VarDecl], operators: [Oper]);
 
@@ -34,12 +33,12 @@ export {
 
 str2prog(s: string) -> Maybe<Prog> {
     gram = "#include vm/vm.lingo";
-    result = parsic3(compilePegGrammar(gram), s, defaultPegActions, Prog([VarDecl("x", Int())], [AssignOper(0, Var("x"), Const(0), [UtilityInt(0)])]));
+    result = parsic3(compilePegGrammar(gram), s, defaultPegActions, Prog([VarDecl("x", Int())], [Assign(0, Var("x"), Const(0), [Mark(0)])]));
     if (result.third == "") {
         Some(result.first);
     }
     else{ 
-        println("Error: " + result.third);
+        println("Error on position "+ i2s(result.second) + ":\n" + result.third);
         None();
     }
 }
@@ -53,9 +52,9 @@ type2str(t: Type) -> string {
 
 expr2str(e: Expr) -> string {
     switch(e) {
-        BinOp(op, le, re): "(" + expr2str(le) + op + expr2str(re) + ")"
-        App(ae, ie): "app(" + expr2str(ae) + "," + expr2str(ie) + ")"
-        Upd(ae, ie, ve): "upd(" + expr2str(ae) + "," + expr2str(ie) + "," + expr2str(ve) + ")"
+        BinOp(op, le, re): "(" + expr2str(le) + " " + op + " " + expr2str(re) + ")"
+        App(ae, ie): "(app(" + expr2str(ae) + ", " + expr2str(ie) + "))"
+        Upd(ae, ie, ve): "(upd(" + expr2str(ae) + ", " + expr2str(ie) + ", " + expr2str(ve) + "))"
         Const(v): i2s(v)
         Var(name): name
     }
@@ -67,22 +66,22 @@ condOp2str(o: CondOp) -> string {
 
 oper2str(o: Oper) -> string {
     switch(o) {
-        CondOper(lab, cond, ll, lr): {
-            ll_s = fold(map(ll, \v -> i2s(v.val)), "", \v, acc -> acc + "," + v);
-            lr_s = fold(map(lr, \v -> i2s(v.val)), "", \v, acc -> acc + "," + v);
-            i2s(lab) + ": " + "if (" + condOp2str(cond) + ") then goto {"
-                                    + strSubRange(ll_s, 0, strlen(ll_s) - 1) + "} else goto {"
-                                    + strSubRange(lr_s, 0, strlen(ll_s) - 1) + "};"
+        IfElse(mark, cond, lm, rm): {
+            lmStr = fold(map(lm, \v -> i2s(v.val)), "", \v, acc -> acc + ", " + v);
+            rmStr = fold(map(rm, \v -> i2s(v.val)), "", \v, acc -> acc + ", " + v);
+            i2s(mark) + ": " + "if (" + condOp2str(cond) + ") then goto {"
+                + strSubRange(lmStr, 0, strlen(lmStr) - 2) + "} else goto {"
+                + strSubRange(rmStr, 0, strlen(lmStr) - 2) + "};"
         }
-        PrintOper(lab, e, labels): {
-            labels_str = fold(map(labels, \v -> i2s(v.val)), "", \v, acc -> acc + "," + v);
-            i2s(lab) + ": " + "print(" + expr2str(e) + ")" +
-                "goto {" + strSubRange(labels_str, 0, strlen(labels_str) - 1) + "};"
+        Print(mark, e, marks): {
+            marksStr = fold(map(marks, \v -> i2s(v.val)), "", \v, acc -> acc + ", " + v);
+            i2s(mark) + ": " + "print(" + expr2str(e) + ")" +
+                " goto {" + strSubRange(marksStr, 0, strlen(marksStr) - 2) + "};"
         }
-        AssignOper(lab, var, val, labels): {
-            labels_str = fold(map(labels, \v -> i2s(v.val)), "", \v, acc -> acc + "," + v);
-            i2s(lab) + ": " + expr2str(var) + "=" + expr2str(val) +
-                                            " goto {" + strSubRange(labels_str, 0, strlen(labels_str) - 1) + "};"
+        Assign(mark, var, val, marks): {
+            marksStr = fold(map(marks, \v -> i2s(v.val)), "", \v, acc -> acc + ", " + v);
+            i2s(mark) + ": " + expr2str(var) + " = " + expr2str(val) +
+                " goto {" + strSubRange(marksStr, 0, strlen(marksStr) - 2) + "};"
         }
     }
 }
@@ -95,5 +94,5 @@ printProg(p: Prog) -> void {
 prog2str(p: Prog) -> string {
     fold(p.decls, "", \ acc, v -> { acc + "var " + v.name + ": " + type2str(v.type)  + ";\n" })
     +
-    fold(p.operators, "", \ acc, v -> { acc + oper2str(v) + "\n" })
+    fold(p.operators, "", \ acc, v -> { acc + oper2str(v) + "\n" });
 }

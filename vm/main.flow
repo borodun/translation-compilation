@@ -7,29 +7,25 @@ main() {
     var i: int;
     var j: int;
     var n: int;
-
-    {
-        n = 25;
-        i = 2;
-
-        x = (upd(x, 0, 0));
-        x = (upd(x, 1, 1));
-        
-        while(i < n) do {
-            x = (upd(x, i, ((app(x, (i - 1))) + (app(x, (i - 2))))));
-            i = (i + 1)
-        };
-
-        j = 0;
-        while(j < n) do {
-            print((app(x, j)));
-            j = (j + 1)
-        }
-    }");
+    0: n = 30 goto {1};
+    1: i = 2 goto {2};
+    2: x = (upd(x, 0, 0)) goto {3};
+    3: x = (upd(x, 1, 1)) goto {4};
+    4: if (0 == 0) then goto {8, 5} else goto {};
+    5: if (i < n) then goto {6} else goto {};
+    6: x = (upd(x, i, ((app(x, (i - 1))) + (app(x, (i - 2)))))) goto {7};
+    7: i = (i + 1) goto {4};
+    8: if (i >= n) then goto {9} else goto {};
+    9: j = 0 goto {10};
+    10: if (0 == 0) then goto {14, 11} else goto {};
+    11: if (j < n) then goto {12} else goto {};
+    12: print((app(x, j))) goto {13};
+    13: j = (j + 1) goto {10};
+    14: if (j >= n) then goto {15} else goto {};");
 
     switch (tree: Maybe<Prog>) {
         Some(t): {
-            println("Prog tree: " +  prog2str(t));
+            println("Prog: \n" +  prog2str(t));
         };
         None(): {
             println("None");

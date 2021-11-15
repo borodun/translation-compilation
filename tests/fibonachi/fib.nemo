@@ -1,0 +1,23 @@
+var x: [int];
+var i: int;
+var j: int;
+var n: int;
+
+{
+    n = 30;
+    i = 2;
+
+    x = (upd(x, 0, 0));
+    x = (upd(x, 1, 1));
+    
+    while(i < n) do {
+        x = (upd(x, i, ((app(x, (i - 1))) + (app(x, (i - 2))))));
+        i = (i + 1)
+    };
+
+    j = 0;
+    while(j < n) do {
+        print((app(x, j)));
+        j = (j + 1)
+    }
+}

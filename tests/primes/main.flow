@@ -1,0 +1,19 @@
+import vm/translator;
+import vm/vm;
+
+main() {
+    s = getFileContent("tests/primes/sieve.nemo");
+    nemo_prog = str2nemoProg(s);
+    switch (nemo_prog: Maybe<NemoProg>) {
+        Some(pr): {
+            vnemo_prog = Prog(nemoDecls2VnemoDecls(pr.decls), nemoOpers2vnemoOpers(pr.operators));
+            setFileContent("tests/primes/sieve.vnemo", prog2str(vnemo_prog));
+            exec(Node(0, initVarsDefault(vnemo_prog.decls)), vnemo_prog);
+            quit(0);
+        };
+        None(): {
+            println("None");
+            quit(0);
+        }
+    }
+}

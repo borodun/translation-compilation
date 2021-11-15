@@ -1,40 +1,40 @@
 import lingo/pegcode/driver;
 
 export {
-    Type ::= IntType, ArrayType;
-    IntType();
-    ArrayType(type: Type);
+    NemoType ::= NemoIntType, NemoArrayType;
+    NemoIntType();
+    NemoArrayType(type: NemoType);
 
-    Expr ::= BinOpExpr, ConstExpr, VarExpr, AppExpr, UpdExpr;
-    BinOpExpr(op: string, le: Expr, re: Expr);
-    ConstExpr(val: int);
-    VarExpr(name: string);
-    AppExpr(ae: Expr, ie: Expr);
-    UpdExpr(ae: Expr, ie: Expr, ve: Expr);
+    NemoExpr ::= NemoBinOpExpr, NemoConstExpr, NemoAppExpr, NemoUpdExpr, NemoVarExpr;
+    NemoBinOpExpr(op: string, le: NemoExpr, re: NemoExpr);
+    NemoAppExpr(ae: NemoExpr, ie: NemoExpr);
+    NemoUpdExpr(ae: NemoExpr, ie: NemoExpr, ve: NemoExpr);
+    NemoConstExpr(val: int);
+    NemoVarExpr(name: string);
 
-    Oper ::= CondOper, SeqOper, PrintOper, AssignOper, ChoiceOper, LoopOper;
-    CondOper(op: string, le: Expr, re: Expr);
-    SeqOper(o: [Oper]);
-    ChoiceOper(o: [Oper]);
-    LoopOper(o: Oper);
-    PrintOper(e: Expr);
-    AssignOper(var: VarExpr, val: Expr);
+    NemoOper ::= NemoCondOper, NemoSeqOper, NemoPrintOper, NemoAssignOper, NemoChoiceOper, NemoLoopOper;
+    NemoCondOper(op: string, le: NemoExpr, re: NemoExpr);
+    NemoSeqOper(o: [NemoOper]);
+    NemoChoiceOper(o: [NemoOper]);
+    NemoLoopOper(o: NemoOper);
+    NemoPrintOper(e: NemoExpr);
+    NemoAssignOper(var: NemoVarExpr, val: NemoExpr);
 
-    VarDecl(name: string, type: Type);
+    NemoVarDecl(name: string, type: NemoType);
 
-    Prog(decls: [VarDecl], operators: Oper);
+    NemoProg(decls: [NemoVarDecl], operators: NemoOper);
 
-    str2prog(s: string) ->Maybe<Prog>;
-    printProg(p: Prog) -> void;
-    prog2str(p: Prog) -> string;
+    str2nemoProg(s: string) ->Maybe<NemoProg>;
+    printNemoProg(p: NemoProg) -> void;
+    nemoProg2str(p: NemoProg) -> string;
 }
 
-seqSemAct(xs: [flow]) -> SeqOper {
-    SeqOper(concat([xs[0]], xs[1]))
+seqSemanticAct(xs: [flow]) -> NemoSeqOper {
+    NemoSeqOper(concat([xs[0]], xs[1]))
 }
 
-choiceSemAct(xs: [flow]) -> ChoiceOper {
-    ChoiceOper(concat([xs[0]], xs[1]))
+choiceSemanticAct(xs: [flow]) -> NemoChoiceOper {
+    NemoChoiceOper(concat([xs[0]], xs[1]))
 }
 
 negoper(o: string) -> string {
@@ -47,70 +47,70 @@ negoper(o: string) -> string {
     else o
 }
 
-ifelseSemAct(xs: [flow]) -> ChoiceOper {
-    ChoiceOper([SeqOper([CondOper(xs[0], xs[1], xs[2]), xs[3]]),
-        SeqOper([CondOper(negoper(xs[0]), xs[1], xs[2]), xs[4]])])
+ifelseSemanticAct(xs: [flow]) -> NemoChoiceOper {
+    NemoChoiceOper([NemoSeqOper([NemoCondOper(xs[0], xs[1], xs[2]), xs[3]]),
+        NemoSeqOper([NemoCondOper(negoper(xs[0]), xs[1], xs[2]), xs[4]])])
 }
 
-whileSemAct(xs: [flow]) -> SeqOper {
-    SeqOper([LoopOper(SeqOper([CondOper(xs[0], xs[1], xs[2]), xs[3]])),
-        CondOper(negoper(xs[0]), xs[1], xs[2])])
+whileSemanticAct(xs: [flow]) -> NemoSeqOper {
+    NemoSeqOper([NemoLoopOper(NemoSeqOper([NemoCondOper(xs[0], xs[1], xs[2]), xs[3]])),
+        NemoCondOper(negoper(xs[0]), xs[1], xs[2])])
 }
 
-str2prog(s: string) -> Maybe<Prog> {
+str2nemoProg(s: string) -> Maybe<NemoProg> {
     pegActions = {
-        t1 = setTree(defaultPegActions.t, "seqSemAct", seqSemAct);
-        t2 = setTree(t1, "choiceSemAct", choiceSemAct);
-        t3 = setTree(t2, "ifelseSemAct", ifelseSemAct);
-        t4 = setTree(t3, "whileSemAct", whileSemAct);
+        t1 = setTree(defaultPegActions.t, "seqSemanticAct", seqSemanticAct);
+        t2 = setTree(t1, "choiceSemanticAct", choiceSemanticAct);
+        t3 = setTree(t2, "ifelseSemanticAct", ifelseSemanticAct);
+        t4 = setTree(t3, "whileSemanticAct", whileSemanticAct);
         SemanticActions(t4);
     }
     gram = "#include nemo/nemo.lingo";
-    result = parsic3(compilePegGrammar(gram), s, pegActions, Prog([VarDecl("x", IntType())], AssignOper(VarExpr("x"), ConstExpr(0))));
+    result = parsic3(compilePegGrammar(gram), s, pegActions, NemoProg([NemoVarDecl("x", NemoIntType())], NemoAssignOper(NemoVarExpr("x"), NemoConstExpr(0))));
     if (result.third == "") {
         Some(result.first);
     }
     else{ 
-        println("Error: " + result.third);
+        println("Error on position "+ i2s(result.second) + ":\n" + result.third);
         None();
     }
 }
 
-type2str(t: Type) -> string {
+nemoType2str(t: NemoType) -> string {
     switch(t) {
-        IntType(): "int"
-        ArrayType(next): "[" + type2str(next) + "]"
+        NemoIntType(): "int"
+        NemoArrayType(next): "[" + nemoType2str(next) + "]"
     }
 }
 
-expr2str(e: Expr) -> string {
+nemoExpr2str(e: NemoExpr) -> string {
     switch(e) {
-        BinOpExpr(op, le, re): "(" + expr2str(le) + op + expr2str(re) + ")"
-        ConstExpr(v): i2s(v)
-        VarExpr(name): name
-        AppExpr(ae, ie): "app(" + expr2str(ae) + "," + expr2str(ie) + ")"
-        UpdExpr(ae, ie, ve): "upd(" + expr2str(ae) + "," + expr2str(ie) + "," + expr2str(ve) + ")"
+        NemoBinOpExpr(op, le, re): "(" + nemoExpr2str(le) + op + nemoExpr2str(re) + ")"
+        NemoAppExpr(ae, ie): "app(" + nemoExpr2str(ae) + "," + nemoExpr2str(ie) + ")"
+        NemoUpdExpr(ae, ie, ve): "upd(" + nemoExpr2str(ae) + "," + nemoExpr2str(ie) + "," + nemoExpr2str(ve) + ")"
+        NemoConstExpr(v): i2s(v)
+        NemoVarExpr(name): name
     }
 }
 
-oper2str(o: Oper) -> string {
+nemoOper2str(o: NemoOper) -> string {
     switch(o) {
-        CondOper(op, l, r): "(" + expr2str(l) + " " + op + " " + expr2str(r) + ")?"
-        PrintOper(e): "print(" + expr2str(e) + ")"
-        AssignOper(var, val): "(" + expr2str(var) + " = " + expr2str(val) + ")"
-        LoopOper(l): oper2str(l) + "*"
-        SeqOper(s): "{" + fold(s, "", \ acc, v -> acc + ";\n" + oper2str(v)) + "}"
-        ChoiceOper(c): "{" + fold(c, "", \ acc, v -> acc + " U " + oper2str(v)) + "}"
+        NemoCondOper(op, l, r): "(" + nemoExpr2str(l) + " " + op + " " + nemoExpr2str(r) + ")?"
+        NemoPrintOper(e): "print(" + nemoExpr2str(e) + ")"
+        NemoAssignOper(var, val): "(" + nemoExpr2str(var) + " = " + nemoExpr2str(val) + ")"
+        NemoLoopOper(l): nemoOper2str(l) + "*"
+        NemoSeqOper(s): "{" + fold(s, "", \ acc, v -> acc + "; " + nemoOper2str(v)) + "}"
+        NemoChoiceOper(c): "{" + fold(c, "", \ acc, v -> acc + " U " + nemoOper2str(v)) + "}"
     }
 }
 
-printProg(p: Prog) -> void {
-    iter(p.decls, \v -> println("var " + v.name + ": " + type2str(v.type)  + ";"));
-    println(oper2str(p.operators));
+printNemoProg(p: NemoProg) -> void {
+    iter(p.decls, \v -> println("var " + v.name + ": " + nemoType2str(v.type)  + ";"));
+    println(nemoOper2str(p.operators));
 }
 
-prog2str(p: Prog) -> string {
-    fold(p.decls, "", \ acc, v -> { acc + "var " + v.name + ": " + type2str(v.type)  + ";\n" })
+nemoProg2str(p: NemoProg) -> string {
+    fold(p.decls, "", \ acc, v -> { acc + "var " + v.name + ": " + nemoType2str(v.type)  + ";\n" })
     +
-    oper2str(p.operators)
+    nemoOper2str(p.operators)
 }
