@@ -1,5 +1,5 @@
-var i: int
-var j: int
+var i int
+var j int
 
 {
     i = 30

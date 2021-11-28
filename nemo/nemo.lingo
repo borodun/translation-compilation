@@ -1,7 +1,7 @@
 program = decl*:d oper:o {NemoProg(:d, :o)};
 
 // Types
-decl = ws "var" ws letters$l ws ":" ws type:t  ws {NemoVarDecl($l, :t)};
+decl = ws "var" ws letters$l ws type:t  ws {NemoVarDecl($l, :t)};
 type  = Int | Array;
 Int = ws "int" ws {NemoIntType()};
 Array = ws "[" type:t "]" ws {NemoArrayType(:t)};

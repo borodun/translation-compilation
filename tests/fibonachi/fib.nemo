@@ -1,6 +1,6 @@
-var fibseq: [int]
-var i: int
-var numcount: int
+var fibseq [int]
+var i int
+var numcount int
 
 {
     numcount = 30

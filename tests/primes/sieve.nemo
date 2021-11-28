@@ -1,7 +1,7 @@
-var isprime: [int]
-var n: int
-var i: int
-var j: int
+var isprime [int]
+var n int
+var i int
+var j int
 
 {
     n = 100
