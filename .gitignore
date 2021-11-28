@@ -1,2 +1,3 @@
 *.debug
 *.bytecode
+tests/fibonachi/fib.vnemo

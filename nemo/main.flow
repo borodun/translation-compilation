@@ -29,7 +29,7 @@ main() {
 
     switch (tree: Maybe<NemoProg>) {
         Some(t): {
-            println("Prog: " + prog2str(t));
+            println("VnemoProg: " + prog2str(t));
         };
         None(): {
             println("None");

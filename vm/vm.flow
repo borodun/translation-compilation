@@ -8,9 +8,9 @@ export {
     ValueInt(v: int);
     ValueArr(a: [Value]);
 
-    exec(node: Node, prog: Prog) -> DList<Node>;
+    exec(prog: VnemoProg) -> DList<Node>;
 
-    initVarsDefault(decls: [VarDecl]) -> Tree<string, Value>;
+    initVarsDefault(decls: [VnemoVarDecl]) -> Tree<string, Value>;
 }
 
 opValues(op: string, l: Value, r: Value) -> Maybe<int> {
@@ -30,9 +30,9 @@ opValues(op: string, l: Value, r: Value) -> Maybe<int> {
     }
 }
 
-computeExpr(e: Expr, t: Tree<string, Value>) -> Maybe<Value> {
+computeExpr(e: VnemoExpr, t: Tree<string, Value>) -> Maybe<Value> {
     switch(e) {
-        BinOp(op, l, r): {
+        VnemoBinOp(op, l, r): {
             c_l = computeExpr(l, t);
             c_r = computeExpr(r, t);
             switch(c_l) {
@@ -46,7 +46,7 @@ computeExpr(e: Expr, t: Tree<string, Value>) -> Maybe<Value> {
                 }
             }
         }
-        App(arr, i): switch(computeExpr(arr, t)) {
+        VnemoApp(arr, i): switch(computeExpr(arr, t)) {
             None(): None()
             Some(v): switch(v) {
                 ValueInt(val): None()
@@ -61,7 +61,7 @@ computeExpr(e: Expr, t: Tree<string, Value>) -> Maybe<Value> {
                 }
             }
         }
-        Upd(arr, i, v): switch(computeExpr(arr, t)) {
+        VnemoUpd(arr, i, v): switch(computeExpr(arr, t)) {
             None(): None()
             Some(val): switch(val) {
                 ValueInt(value): None()
@@ -81,15 +81,15 @@ computeExpr(e: Expr, t: Tree<string, Value>) -> Maybe<Value> {
                 }
             }
         }
-        Const(val): Some(ValueInt(val))
-        Var(name): switch(lookupTree(t, name)) {
+        VnemoConst(val): Some(ValueInt(val))
+        VnemoVar(name): switch(lookupTree(t, name)) {
             None(): None()
             Some(v): Some(v)
         }
     }
 }
 
-computeCondition(o: CondOp, t: Tree<string, Value>) -> Maybe<bool> {
+computeCondition(o: VnemoCond, t: Tree<string, Value>) -> Maybe<bool> {
     c_le = computeExpr(o.le, t);
     c_re = computeExpr(o.re, t);
     switch(c_le) {
@@ -109,18 +109,18 @@ computeCondition(o: CondOp, t: Tree<string, Value>) -> Maybe<bool> {
     }
 }
 
-getOperByLabel(label: int, prog: Prog) -> Maybe<Oper> {
+getOperByLabel(label: int, prog: VnemoProg) -> Maybe<VnemoOper> {
     find(prog.operators, \ oper -> {
         switch(oper) {
-            IfElse(l, cond, lm, rm): {
+            VnemoIfElse(l, cond, lm, rm): {
                 if(l == label) true
                 else false
             }
-            Print(l, e, marks): {
+            VnemoPrint(l, e, marks): {
                 if(l == label) true
                 else false
             }
-            Assign(l, var, val, marks): {
+            VnemoAssign(l, var, val, marks): {
                 if(l == label) true
                 else false
             }
@@ -135,7 +135,7 @@ arr2str(arr: Value) -> string {
     }
 }
 
-printTree(e: Expr, t: Tree<string, Value>) -> void {
+printTree(e: VnemoExpr, t: Tree<string, Value>) -> void {
     switch(computeExpr(e, t)) {
         None(): println("Bad expression!");
         Some(v): switch(v) {
@@ -145,12 +145,12 @@ printTree(e: Expr, t: Tree<string, Value>) -> void {
     }
 }
 
-updateNode(node: Node, prog: Prog) -> Pair<bool, DList<Node>> {
+updateNode(node: Node, prog: VnemoProg) -> Pair<bool, DList<Node>> {
     operator = getOperByLabel(node.label, prog);
     result = switch(operator) {
         None(): Pair(false, Some([node]))
         Some(v): switch(v) {
-            IfElse(l, cond, lm, rm): switch(computeCondition(cond, node.values)) {
+            VnemoIfElse(l, cond, lm, rm): switch(computeCondition(cond, node.values)) {
                 None(): Pair(false, None())
                 Some(rez): if(rez) {
                     Pair(true, Some(map(lm, \ label -> { Node(label.val, node.values) })))
@@ -158,10 +158,10 @@ updateNode(node: Node, prog: Prog) -> Pair<bool, DList<Node>> {
                     Pair(true, Some(map(rm, \ label -> { Node(label.val, node.values) })))
                 }
             }
-            Print(l, e, marks): { printTree(e, node.values);
+            VnemoPrint(l, e, marks): { printTree(e, node.values);
                 Pair(true, Some(map(marks, \ label -> { Node(label.val, node.values) })))
             }
-            Assign(l, var, e, marks): {
+            VnemoAssign(l, var, e, marks): {
                 switch(computeExpr(e, node.values)) {
                     None(): Pair(false, None())
                     Some(val): switch(lookupTree(node.values, var.name)) {
@@ -181,24 +181,28 @@ updateNode(node: Node, prog: Prog) -> Pair<bool, DList<Node>> {
     })
 }
 
-initVarsDefault(decls: [VarDecl]) -> Tree<string, Value> {
+initVarsDefault(decls: [VnemoVarDecl]) -> Tree<string, Value> {
     fold(decls, makeTree(), \ tree, v -> switch(v.type) {
-        Int(): setTree(tree, v.name, ValueInt(0))
-        Array(type): setTree(tree, v.name, ValueArr([]))
+        VnemoIntType(): setTree(tree, v.name, ValueInt(0))
+        VnemoArrayType(type): setTree(tree, v.name, ValueArr([]))
     })
 }
 
-exec(node: Node, prog: Prog) -> DList<Node> {
+exec(prog: VnemoProg) -> DList<Node> {
+    node = Node(0, initVarsDefault(prog.decls));
     queue = makeDList();
     pushDList(queue, node);
     for(queue, \ q -> { !isEmptyDList(q) }, \ q -> {
         switch(popFirstDList(q)) {
             None(): makeDList()
             Some(v): {
-                new_queue =  updateNode(v, prog);
-                if(new_queue.first) {
-                    concatDList(q, new_queue.second); q
-                } else { q }
+                newQueue =  updateNode(v, prog);
+                if(newQueue.first) {
+                    concatDList(q, newQueue.second);
+                    q
+                } else { 
+                    q 
+                }
             }
         }
     });

@@ -1,23 +1,22 @@
-var x: [int];
-var i: int;
-var j: int;
-var n: int;
+var fibseq: [int]
+var i: int
+var numcount: int
 
 {
-    n = 30;
-    i = 2;
+    numcount = 30
+    i = 2
 
-    x = (upd(x, 0, 0));
-    x = (upd(x, 1, 1));
+    fibseq = (upd(fibseq, 0, 0))
+    fibseq = (upd(fibseq, 1, 1))
     
-    while(i < n) do {
-        x = (upd(x, i, ((app(x, (i - 1))) + (app(x, (i - 2))))));
+    while(i < numcount) {
+        fibseq = (upd(fibseq, i, ((app(fibseq, (i - 1))) + (app(fibseq, (i - 2))))))
         i = (i + 1)
-    };
+    }
 
-    j = 0;
-    while(j < n) do {
-        print((app(x, j)));
-        j = (j + 1)
+    i = 1
+    while(i < numcount) {
+        print((app(fibseq, i)))
+        i = (i + 1)
     }
 }

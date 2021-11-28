@@ -1,38 +1,37 @@
 program = decl*:d oper:o {NemoProg(:d, :o)};
 
 // Types
-decl = ws "var" ws letters$l ws ":" ws type:t ws ";" ws {NemoVarDecl($l, :t)};
+decl = ws "var" ws letters$l ws ":" ws type:t  ws {NemoVarDecl($l, :t)};
 type  = Int | Array;
 Int = ws "int" ws {NemoIntType()};
 Array = ws "[" type:t "]" ws {NemoArrayType(:t)};
 
 // Operations
 oper = cond | assign | print | ifelse | while | seq | choice | loop ;
+cond = ws "(" expr:l logOp$o expr:r ")" ws "?" ws {NemoCond($o, :l, :r)};
+assign = ws var:v "=" expr:e  ws {NemoAssign(:v, :e)};
+print = ws "print" ws "(" expr:e ")" ws {NemoPrint(:e)};
 
-cond = ws "(" expr:l logOp$o expr:r ")" ws "?" ws {NemoCondOper($o, :l, :r)};
-assign = var:v "=" expr:e {NemoAssignOper(:v, :e)};
-print = ws "print" ws "(" expr:e ")" ws {NemoPrintOper(:e)};
-
+if = ws "if" ws "(" expr:l logOp$o expr:r ")"
+    ws oper:po ws {ifSemanticAct($o, :l, :r, :po)};
 ifelse = ws "if" ws "(" expr:l logOp$o expr:r ")"
-    ws "then" ws oper:po ws "else" oper:no ws {ifelseSemanticAct($o, :l, :r, :po, :no)};
+    ws oper:po ws "else" oper:no ws {ifelseSemanticAct($o, :l, :r, :po, :no)};
 while = ws "while" ws "(" expr:l logOp$o expr:r ")"
-    ws "do" ws oper:b ws {whileSemanticAct($o, :l, :r, :b)};
+    ws oper:b ws {whileSemanticAct($o, :l, :r, :b)};
 
-seq = ws "{" oper:l semSeq*:o "}" ws {seqSemanticAct(:l, :o)};
-semSeq = ws ";" oper;
+seq = ws "{" oper:l ws oper*:o  "}" ws {seqSemanticAct(:l, :o)};
 
-choice = ws "{" oper:l semChoice*:o "}" ws {choiceSemanticAct(:l, :o)};
-semChoice = ws "U" oper;
+choice = ws "{" oper:l (ws "U" oper)*:o "}" ws {choiceSemanticAct(:l, :o)};
 
 loop = ws "(" oper:o ws ")" ws "*" ws {LoopOper(:o)};
 
 // Expressions
 expr = const | var | binop | app | upd;
-const = ws digits$d ws {NemoConstExpr(s2i($d))};
-var = ws letters$l ws {NemoVarExpr($l)};
-binop = ws "(" expr:l arithmeticOp$s expr:r ")" ws {NemoBinOpExpr($s, :l, :r)};
-app  = ws "(" ws "app" ws "(" expr:l "," expr:r ")" ws ")" ws {NemoAppExpr(:l, :r)};
-upd = ws "(" ws "upd" ws "(" expr:l "," expr:m "," expr:r ")" ws ")" ws {NemoUpdExpr(:l, :m, :r)};
+const = ws digits$d ws {NemoConst(s2i($d))};
+var = ws letters$l ws {NemoVar($l)};
+binop = ws "(" expr:l arithmeticOp$s expr:r ")" ws {NemoBinOp($s, :l, :r)};
+app  = ws "(" ws "app" ws "(" expr:l "," expr:r ")" ws ")" ws {NemoApp(:l, :r)};
+upd = ws "(" ws "upd" ws "(" expr:l "," expr:m "," expr:r ")" ws ")" ws {NemoUpd(:l, :m, :r)};
 
 // Base
 digits = ('0'-'9')+;

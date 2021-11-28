@@ -23,9 +23,9 @@ main() {
     13: j = (j + 1) goto {10};
     14: if (j >= n) then goto {15} else goto {};");
 
-    switch (tree: Maybe<Prog>) {
+    switch (tree: Maybe<VnemoProg>) {
         Some(t): {
-            println("Prog: \n" +  prog2str(t));
+            println("VnemoProg: \n" +  prog2str(t));
         };
         None(): {
             println("None");

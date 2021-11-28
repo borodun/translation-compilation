@@ -1,0 +1,13 @@
+var i: int;
+var j: int;
+
+{
+    i = 30;
+    j = 2;
+
+    if(i < j) {
+        print(j)
+    } else { 
+        print(i)
+    }
+}
