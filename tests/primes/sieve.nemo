@@ -23,8 +23,6 @@ var j: int
                 isprime = (upd(isprime, j, 0))
                 j = (j + i)
             }
-        } else {
-            print(i)
         }
         i = (i + 1)
     }
@@ -33,9 +31,7 @@ var j: int
     while(i < n) {
         if((app(isprime, i)) == 1) {
             print(i)
-        } else {
-            print(0)
-        }
+        } 
         i = (i + 1)  
     }
 }

@@ -1,9 +1,0 @@
-var i: int;
-var j: int;
-0: i = 30 goto {1};
-1: j = 2 goto {2};
-2: if (0 == 0) then goto {5, 3} else goto {};
-3: if (i < j) then goto {4} else goto {};
-4: print(j) goto {7};
-5: if (i >= j) then goto {6} else goto {};
-6: print(i) goto {7};

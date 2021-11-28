@@ -7,23 +7,18 @@ Int = ws "int" ws {NemoIntType()};
 Array = ws "[" type:t "]" ws {NemoArrayType(:t)};
 
 // Operations
-oper = cond | assign | print | ifelse | while | seq | choice | loop ;
-cond = ws "(" expr:l logOp$o expr:r ")" ws "?" ws {NemoCond($o, :l, :r)};
+oper = assign | print | ifelse | if  | while | seq;
 assign = ws var:v "=" expr:e  ws {NemoAssign(:v, :e)};
 print = ws "print" ws "(" expr:e ")" ws {NemoPrint(:e)};
 
 if = ws "if" ws "(" expr:l logOp$o expr:r ")"
-    ws oper:po ws {ifSemanticAct($o, :l, :r, :po)};
+    ws oper:ifop ws {ifSemanticAct($o, :l, :r, :ifop)};
 ifelse = ws "if" ws "(" expr:l logOp$o expr:r ")"
-    ws oper:po ws "else" oper:no ws {ifelseSemanticAct($o, :l, :r, :po, :no)};
+    ws oper:ifop ws "else" oper:elseop ws {ifelseSemanticAct($o, :l, :r, :ifop, :elseop)};
 while = ws "while" ws "(" expr:l logOp$o expr:r ")"
     ws oper:b ws {whileSemanticAct($o, :l, :r, :b)};
 
 seq = ws "{" oper:l ws oper*:o  "}" ws {seqSemanticAct(:l, :o)};
-
-choice = ws "{" oper:l (ws "U" oper)*:o "}" ws {choiceSemanticAct(:l, :o)};
-
-loop = ws "(" oper:o ws ")" ws "*" ws {LoopOper(:o)};
 
 // Expressions
 expr = const | var | binop | app | upd;

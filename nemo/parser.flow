@@ -33,11 +33,7 @@ seqSemanticAct(xs: [flow]) -> NemoSeq {
     NemoSeq(concat([xs[0]], xs[1]))
 }
 
-choiceSemanticAct(xs: [flow]) -> NemoChoice {
-    NemoChoice(concat([xs[0]], xs[1]))
-}
-
-negoper(o: string) -> string {
+negate(o: string) -> string {
     if(o == "==") "!="
     else if(o == "<=") ">"
     else if(o == ">=") "<"
@@ -47,20 +43,25 @@ negoper(o: string) -> string {
     else o
 }
 
+ifSemanticAct(xs: [flow]) -> NemoChoice {
+    NemoChoice([NemoSeq([NemoCond(xs[0], xs[1], xs[2]), xs[3]]),
+        NemoSeq([NemoCond(negate(xs[0]), xs[1], xs[2])])])
+}
+
 ifelseSemanticAct(xs: [flow]) -> NemoChoice {
     NemoChoice([NemoSeq([NemoCond(xs[0], xs[1], xs[2]), xs[3]]),
-        NemoSeq([NemoCond(negoper(xs[0]), xs[1], xs[2]), xs[4]])])
+        NemoSeq([NemoCond(negate(xs[0]), xs[1], xs[2]), xs[4]])])
 }
 
 whileSemanticAct(xs: [flow]) -> NemoSeq {
     NemoSeq([NemoLoop(NemoSeq([NemoCond(xs[0], xs[1], xs[2]), xs[3]])),
-        NemoCond(negoper(xs[0]), xs[1], xs[2])])
+        NemoCond(negate(xs[0]), xs[1], xs[2])])
 }
 
 str2nemoProg(s: string) -> Maybe<NemoProg> {
     pegActions = {
         t1 = setTree(defaultPegActions.t, "seqSemanticAct", seqSemanticAct);
-        t2 = setTree(t1, "choiceSemanticAct", choiceSemanticAct);
+        t2 = setTree(t1, "ifSemanticAct", ifSemanticAct);
         t3 = setTree(t2, "ifelseSemanticAct", ifelseSemanticAct);
         t4 = setTree(t3, "whileSemanticAct", whileSemanticAct);
         SemanticActions(t4);

@@ -2,12 +2,13 @@ import vm/translator;
 import vm/vm;
 
 main() {
-    s = getFileContent("tests/fibonachi/fib.nemo");
+    file = "tests/fibonachi/fib";
+    s = getFileContent(file + ".nemo");
     nemoProg = str2nemoProg(s);
     switch (nemoProg: Maybe<NemoProg>) {
         Some(pr): {
-            vnemoProg = VnemoProg(nemoDecls2VnemoDecls(pr.decls), nemoOpers2VnemoOpers(pr.operators));
-            setFileContent("tests/fibonachi/fib.vnemo", vnemoProg2str(vnemoProg));
+            vnemoProg = nemo2vnemo(pr);
+            setFileContent(file + ".vnemo", vnemoProg2str(vnemoProg));
             exec(vnemoProg);
             quit(0);
         };
