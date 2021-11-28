@@ -3,10 +3,16 @@ var j: int
 
 {
     i = 30
-    j = 2
+    j = 200
 
     if(i < j) {
         print(j)
     }
     print(i)
+
+    if(i < j) {
+        print(j)
+    } else {
+        print(i)
+    }
 }

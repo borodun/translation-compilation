@@ -2,7 +2,7 @@ import vm/parser;
 import string;
 
 main() {
-    tree = str2prog("
+    tree = str2vnemoProg("
     var x: [int];
     var i: int;
     var j: int;
@@ -25,7 +25,7 @@ main() {
 
     switch (tree: Maybe<VnemoProg>) {
         Some(t): {
-            println("VnemoProg: \n" +  prog2str(t));
+            println("VnemoProg: \n" +  vnemoProg2str(t));
         };
         None(): {
             println("None");

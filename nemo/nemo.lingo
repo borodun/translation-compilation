@@ -21,16 +21,17 @@ while = ws "while" ws "(" expr:l logOp$o expr:r ")"
 seq = ws "{" oper:l ws oper*:o  "}" ws {seqSemanticAct(:l, :o)};
 
 // Expressions
-expr = const | var | binop | app | upd;
+expr = const | var | binop | app | upd | string;
 const = ws digits$d ws {NemoConst(s2i($d))};
 var = ws letters$l ws {NemoVar($l)};
 binop = ws "(" expr:l arithmeticOp$s expr:r ")" ws {NemoBinOp($s, :l, :r)};
 app  = ws "(" ws "app" ws "(" expr:l "," expr:r ")" ws ")" ws {NemoApp(:l, :r)};
 upd = ws "(" ws "upd" ws "(" expr:l "," expr:m "," expr:r ")" ws ")" ws {NemoUpd(:l, :m, :r)};
+string = ws "\"" (digits | letters)*:str "\"" ws {NemoString(:str)};
 
 // Base
 digits = ('0'-'9')+;
-letters = ('a'-'z')+;
+letters = ('a'-'z'| 'A'-'Z')+;
 logOp = ("==" | "<=" | ">=" | "<" | ">" | "!=");
 arithmeticOp = ("+" | "*" | "/" | "-" | "%");
 

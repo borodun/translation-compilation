@@ -3,17 +3,15 @@ import ds/array;
 import ds/dlist;
 
 export {
-    Node(label: int, values: Tree<string, Value>);
-    Value ::= ValueInt, ValueArr;
-    ValueInt(v: int);
-    ValueArr(a: [Value]);
-
     exec(prog: VnemoProg) -> DList<Node>;
-
-    initVarsDefault(decls: [VnemoVarDecl]) -> Tree<string, Value>;
 }
 
-opValues(op: string, l: Value, r: Value) -> Maybe<int> {
+Node(label: int, values: Tree<string, Value>);
+Value ::= ValueInt, ValueArr;
+ValueInt(v: int);
+ValueArr(arr: [Value]);
+
+calculate(op: string, l: Value, r: Value) -> Maybe<int> {
     switch(l) {
         ValueArr(al): None()
         ValueInt(vl): switch(r) {
@@ -30,79 +28,88 @@ opValues(op: string, l: Value, r: Value) -> Maybe<int> {
     }
 }
 
-computeExpr(e: VnemoExpr, t: Tree<string, Value>) -> Maybe<Value> {
+solveExpr(e: VnemoExpr, t: Tree<string, Value>) -> Maybe<Value> {
     switch(e) {
         VnemoBinOp(op, l, r): {
-            c_l = computeExpr(l, t);
-            c_r = computeExpr(r, t);
-            switch(c_l) {
+            switch(solveExpr(l, t)) {
+            None(): None()
+            Some(lv): 
+                switch(solveExpr(r, t)) {
                 None(): None()
-                Some(lv): switch(c_r) {
+                Some(rv): 
+                    switch(calculate(op, lv, rv)) {
                     None(): None()
-                    Some(rv): switch(opValues(op, lv, rv)) {
-                        None(): None()
-                        Some(rez): Some(ValueInt(rez))
+                    Some(res): Some(ValueInt(res))
                     }
                 }
             }
         }
-        VnemoApp(arr, i): switch(computeExpr(arr, t)) {
+        VnemoApp(a, i): 
+            switch(solveExpr(a, t)) {
             None(): None()
-            Some(v): switch(v) {
+            Some(v): 
+                switch(v) {
                 ValueInt(val): None()
-                ValueArr(a): switch(computeExpr(i, t)) {
+                ValueArr(arr): 
+                    switch(solveExpr(i, t)) {
                     None(): None()
-                    Some(vi): switch(vi) {
+                    Some(vi): 
+                        switch(vi) {
                         ValueArr(ai): None()
-                        ValueInt(index):
-                            if(index < length(a)) { Some(a[index]) }
+                        ValueInt(idx):
+                            if(idx < length(arr)) { Some(arr[idx]) }
                             else { None() }
+                        }
                     }
                 }
             }
-        }
-        VnemoUpd(arr, i, v): switch(computeExpr(arr, t)) {
+        VnemoUpd(a, i, v): 
+            switch(solveExpr(a, t)) {
             None(): None()
-            Some(val): switch(val) {
+            Some(val): 
+                switch(val) {
                 ValueInt(value): None()
-                ValueArr(a): switch(computeExpr(i, t)) {
+                ValueArr(arr): 
+                    switch(solveExpr(i, t)) {
                     None(): None()
-                    Some(vi): switch(vi) {
+                    Some(vi): 
+                        switch(vi) {
                         ValueArr(ai): None()
-                        ValueInt(index): switch(computeExpr(v, t)) {
+                        ValueInt(idx): 
+                            switch(solveExpr(v, t)) {
                             None(): None()
-                            Some(rez_v): {
-                                if(index < length(a)) { Some(ValueArr(replace(a, index, rez_v))) }
-                                else if(index == length(a)) { Some(ValueArr(concat(a, [rez_v]))) }
+                            Some(res_v): {
+                                if(idx < length(arr)) { Some(ValueArr(replace(arr, idx, res_v))) }
+                                else if(idx == length(arr)) { Some(ValueArr(concat(arr, [res_v]))) }
                                 else { None() }
+                                }
                             }
                         }
                     }
                 }
             }
-        }
         VnemoConst(val): Some(ValueInt(val))
-        VnemoVar(name): switch(lookupTree(t, name)) {
+        VnemoVar(name): 
+            switch(lookupTree(t, name)) {
             None(): None()
             Some(v): Some(v)
         }
     }
 }
 
-computeCondition(o: VnemoCond, t: Tree<string, Value>) -> Maybe<bool> {
-    c_le = computeExpr(o.le, t);
-    c_re = computeExpr(o.re, t);
-    switch(c_le) {
+checkCond(o: VnemoCond, t: Tree<string, Value>) -> Maybe<bool> {
+    switch(solveExpr(o.le, t)) {
         None(): None()
-        Some(v_le): switch(c_re) {
+        Some(lExpr): 
+        switch(solveExpr(o.re, t)) {
             None(): None()
-            Some(v_re): {
-                if(o.op == "==") Some(v_le == v_re)
-                else if(o.op == "<=") Some(v_le <= v_re)
-                else if(o.op == ">=") Some(v_le >= v_re)
-                else if(o.op == "<") Some(v_le < v_re)
-                else if(o.op == ">") Some(v_le > v_re)
-                else if(o.op == "!=") Some(v_le != v_re)
+            Some(rExpr): {
+                if(o.op == "==") Some(lExpr == rExpr)
+                else if(o.op == "<=") Some(lExpr <= rExpr)
+                else if(o.op == ">=") Some(lExpr >= rExpr)
+                else if(o.op == "<") Some(lExpr < rExpr)
+                else if(o.op == ">") Some(lExpr > rExpr)
+                else if(o.op == "!=") Some(lExpr != rExpr)
                 else None()
             }
         }
@@ -112,65 +119,70 @@ computeCondition(o: VnemoCond, t: Tree<string, Value>) -> Maybe<bool> {
 getOperByLabel(label: int, prog: VnemoProg) -> Maybe<VnemoOper> {
     find(prog.operators, \ oper -> {
         switch(oper) {
-            VnemoIfElse(l, cond, lm, rm): {
-                if(l == label) true
+            VnemoIfElse(lab, cond, lm, rm): {
+                if(lab == label) true
                 else false
             }
-            VnemoPrint(l, e, marks): {
-                if(l == label) true
+            VnemoPrint(lab, e, labels): {
+                if(lab == label) true
                 else false
             }
-            VnemoAssign(l, var, val, marks): {
-                if(l == label) true
+            VnemoAssign(lab, var, val, labels): {
+                if(lab == label) true
                 else false
             }
         }
     })
 }
 
-arr2str(arr: Value) -> string {
-    switch(arr) {
+arr2str(a: Value) -> string {
+    switch(a) {
         ValueInt(v): i2s(v)
-        ValueArr(a): "[" + fold(a, "", \ s, v -> {s + " " + arr2str(v)}) + "]"
+        ValueArr(arr): "[" + fold(arr, "", \ s, v -> {s + " " + arr2str(v)}) + "]"
     }
 }
 
 printTree(e: VnemoExpr, t: Tree<string, Value>) -> void {
-    switch(computeExpr(e, t)) {
+    switch(solveExpr(e, t)) {
         None(): println("Bad expression!");
-        Some(v): switch(v) {
-            ValueInt(val): println(val);
-            ValueArr(arr): println(arr2str(v));
-        }
+        Some(v): 
+            switch(v) {
+                ValueInt(val): println(val);
+                ValueArr(arr): println(arr2str(v))
+            }
     }
 }
 
 updateNode(node: Node, prog: VnemoProg) -> Pair<bool, DList<Node>> {
-    operator = getOperByLabel(node.label, prog);
-    result = switch(operator) {
+    oper = getOperByLabel(node.label, prog);
+    result = switch(oper) {
         None(): Pair(false, Some([node]))
-        Some(v): switch(v) {
-            VnemoIfElse(l, cond, lm, rm): switch(computeCondition(cond, node.values)) {
-                None(): Pair(false, None())
-                Some(rez): if(rez) {
-                    Pair(true, Some(map(lm, \ label -> { Node(label.val, node.values) })))
-                } else {
-                    Pair(true, Some(map(rm, \ label -> { Node(label.val, node.values) })))
-                }
-            }
-            VnemoPrint(l, e, marks): { printTree(e, node.values);
-                Pair(true, Some(map(marks, \ label -> { Node(label.val, node.values) })))
-            }
-            VnemoAssign(l, var, e, marks): {
-                switch(computeExpr(e, node.values)) {
+        Some(v): 
+        switch(v) {
+            VnemoIfElse(lab, cond, lm, rm): 
+                switch(checkCond(cond, node.values)) {
                     None(): Pair(false, None())
-                    Some(val): switch(lookupTree(node.values, var.name)) {
-                        None(): Pair(false, None())
-                        Some(var_val): {
-                            upd_tree = setTree(node.values, var.name, val);
-                            Pair(true, Some(map(marks, \ label -> { Node(label.val, upd_tree) })))
-                        }
+                    Some(res): if(res) {
+                        Pair(true, Some(map(lm, \ label -> { Node(label.val, node.values) })))
+                    } else {
+                        Pair(true, Some(map(rm, \ label -> { Node(label.val, node.values) })))
                     }
+                }
+            VnemoPrint(lab, e, labels): { 
+                printTree(e, node.values);
+                Pair(true, Some(map(labels, \ label -> { Node(label.val, node.values) })))
+            }
+            VnemoAssign(lab, var, e, labels): {
+                switch(solveExpr(e, node.values)) {
+                    None(): Pair(false, None())
+                    Some(val): 
+                        switch(lookupTree(node.values, var.name)) {
+                            None(): Pair(false, None())
+                            Some(var_val): {
+                                upd_tree = setTree(node.values, var.name, val);
+                                Pair(true, Some(map(labels, \ label -> { Node(label.val, upd_tree) })))
+                            }
+                        }
                 }
             }
         }

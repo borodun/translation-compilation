@@ -5,13 +5,6 @@ export {
     NemoIntType();
     NemoArrayType(type: NemoType);
 
-    NemoExpr ::= NemoBinOp, NemoConst, NemoApp, NemoUpd, NemoVar;
-    NemoBinOp(op: string, le: NemoExpr, re: NemoExpr);
-    NemoConst(val: int);
-    NemoApp(ae: NemoExpr, ie: NemoExpr);
-    NemoUpd(ae: NemoExpr, ie: NemoExpr, ve: NemoExpr);
-    NemoVar(name: string);
-
     NemoOper ::= NemoCond, NemoSeq, NemoPrint, NemoAssign, NemoChoice, NemoLoop;
     NemoCond(op: string, le: NemoExpr, re: NemoExpr);
     NemoSeq(o: [NemoOper]);
@@ -19,6 +12,14 @@ export {
     NemoAssign(var: NemoVar, val: NemoExpr);
     NemoChoice(o: [NemoOper]);
     NemoLoop(o: NemoOper);
+
+    NemoExpr ::= NemoBinOp, NemoConst, NemoApp, NemoUpd, NemoVar;
+    NemoBinOp(op: string, le: NemoExpr, re: NemoExpr);
+    NemoConst(val: int);
+    NemoApp(arr: NemoExpr, idx: NemoExpr);
+    NemoUpd(arr: NemoExpr, idx: NemoExpr, val: NemoExpr);
+    NemoVar(name: string);
+    NemoString(str: string);
     
     NemoVarDecl(name: string, type: NemoType);
 
@@ -87,8 +88,8 @@ nemoType2str(t: NemoType) -> string {
 nemoExpr2str(e: NemoExpr) -> string {
     switch(e) {
         NemoBinOp(op, le, re): "(" + nemoExpr2str(le) + op + nemoExpr2str(re) + ")"
-        NemoApp(ae, ie): "app(" + nemoExpr2str(ae) + "," + nemoExpr2str(ie) + ")"
-        NemoUpd(ae, ie, ve): "upd(" + nemoExpr2str(ae) + "," + nemoExpr2str(ie) + "," + nemoExpr2str(ve) + ")"
+        NemoApp(arr, idx): "app(" + nemoExpr2str(arr) + "," + nemoExpr2str(idx) + ")"
+        NemoUpd(arr, idx, val): "upd(" + nemoExpr2str(arr) + "," + nemoExpr2str(idx) + "," + nemoExpr2str(val) + ")"
         NemoConst(v): i2s(v)
         NemoVar(name): name
     }

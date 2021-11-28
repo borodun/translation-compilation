@@ -71,28 +71,28 @@ oper2str(o: VnemoOper) -> string {
             rmStr = fold(map(rm, \v -> i2s(v.val)), "", \v, acc -> acc + ", " + v);
             i2s(mark) + ": " + "if (" + condOp2str(cond) + ") then goto {"
                 + strSubRange(lmStr, 0, strlen(lmStr) - 2) + "} else goto {"
-                + strSubRange(rmStr, 0, strlen(lmStr) - 2) + "};"
+                + strSubRange(rmStr, 0, strlen(lmStr) - 2) + "}"
         }
         VnemoPrint(mark, e, marks): {
             marksStr = fold(map(marks, \v -> i2s(v.val)), "", \v, acc -> acc + ", " + v);
             i2s(mark) + ": " + "print(" + expr2str(e) + ")" +
-                " goto {" + strSubRange(marksStr, 0, strlen(marksStr) - 2) + "};"
+                " goto {" + strSubRange(marksStr, 0, strlen(marksStr) - 2) + "}"
         }
         VnemoAssign(mark, var, val, marks): {
             marksStr = fold(map(marks, \v -> i2s(v.val)), "", \v, acc -> acc + ", " + v);
             i2s(mark) + ": " + expr2str(var) + " = " + expr2str(val) +
-                " goto {" + strSubRange(marksStr, 0, strlen(marksStr) - 2) + "};"
+                " goto {" + strSubRange(marksStr, 0, strlen(marksStr) - 2) + "}"
         }
     }
 }
 
 printVnemoProg(p: VnemoProg) -> void {
-    iter(p.decls, \v -> println("var " + v.name + ": " + type2str(v.type)  + ";"));
+    iter(p.decls, \v -> println("var " + v.name + ": " + type2str(v.type)));
     iter(p.operators, \v -> println(oper2str(v)));
 }
 
 vnemoProg2str(p: VnemoProg) -> string {
-    fold(p.decls, "", \ acc, v -> { acc + "var " + v.name + ": " + type2str(v.type)  + ";\n" })
+    fold(p.decls, "", \ acc, v -> { acc + "var " + v.name + ": " + type2str(v.type)  + "\n" })
     +
     fold(p.operators, "", \ acc, v -> { acc + oper2str(v) + "\n" });
 }

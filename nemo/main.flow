@@ -2,34 +2,34 @@ import nemo/parser;
 import string;
 
 main() {
-    tree = str2Prog("
-    var x: [int];
-    var i: int;
-    var j: int;
-    var n: int;
+    tree = str2nemoProg("
+    var x: [int]
+    var i: int
+    var j: int
+    var n: int
 
     {
-        n = 30;
-        i = 2;
+        n = 30
+        i = 2
 
-        x = (upd(x, 0, 0));
-        x = (upd(x, 1, 1));
+        x = (upd(x, 0, 0))
+        x = (upd(x, 1, 1))
         
-        while(i < n) do {
-            x = (upd(x, i, ((app(x, (i - 1))) + (app(x, (i - 2))))));
+        while(i < n) {
+            x = (upd(x, i, ((app(x, (i - 1))) + (app(x, (i - 2))))))
             i = (i + 1)
-        };
+        }
 
-        j = 0;
-        while(j < n) do {
-            print((app(x, j)));
+        j = 0
+        while(j < n) {
+            print((app(x, j)))
             j = (j + 1)
         }
     }");
 
     switch (tree: Maybe<NemoProg>) {
         Some(t): {
-            println("VnemoProg: " + prog2str(t));
+            println("VnemoProg: " + nemoProg2str(t));
         };
         None(): {
             println("None");
