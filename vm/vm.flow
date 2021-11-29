@@ -89,15 +89,8 @@ solveExpr(e: VnemoExpr, t: Tree<string, Value>) -> Maybe<Value> {
                     }
                 }
             }
-        VnemoConst(val): {
-            v : Value = ValueInt(val);
-            m : Maybe<Value> = Some(v);
-            m;
-        }
-        VnemoVar(name): {
-            ret : Maybe<Value> = lookupTree(t, name);
-            ret;
-        }
+        VnemoConst(val): Some(ValueInt(val));
+        VnemoVar(name): lookupTree(t, name);
     }
 }
 
@@ -192,12 +185,9 @@ updateNode(node: Node, prog: VnemoProg) -> Pair<bool, DList<Node>> {
         }
     }
     arr : Maybe<[Node]> = result.second;
-    ret : DList<Node> = switch(arr) {
-        None():{ 
-            ret: DList<Node> = makeDList();
-            ret;
-        }
-        Some(array): fold(array, makeDList(), \ q:DList<Node>, n:Node -> { pushDList(q, n); q});
+    ret = switch(arr) {
+        None():makeDList();
+        Some(array): fold(array, makeDList(), \ q, n -> { pushDList(q, n); q});
     }
     Pair(result.first, ret)
 }
