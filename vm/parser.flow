@@ -20,7 +20,7 @@ export {
     VnemoCond(op: string, le: VnemoExpr, re: VnemoExpr);
     VnemoIfElse(mark: int, cond: VnemoCond, lm: [VnemoLabel], rm: [VnemoLabel]);
     VnemoPrint(mark: int, e: VnemoExpr, marks: [VnemoLabel]);
-    VnemoAssign(mark: int, var: VnemoVar, val: VnemoExpr, marks: [VnemoLabel]);
+    VnemoAssign(mark: int, v: VnemoVar, val: VnemoExpr, marks: [VnemoLabel]);
 
     VnemoVarDecl(name: string, type: VnemoType);
 
@@ -45,18 +45,18 @@ str2vnemoProg(s: string) -> Maybe<VnemoProg> {
 
 type2str(t: VnemoType) -> string {
     switch(t) {
-        VnemoIntType(): "int"
-        VnemoArrayType(next): "[" + type2str(next) + "]"
+        VnemoIntType(): "int";
+        VnemoArrayType(next): "[" + type2str(next) + "]";
     }
 }
 
 expr2str(e: VnemoExpr) -> string {
     switch(e) {
-        VnemoBinOp(op, le, re): "(" + expr2str(le) + " " + op + " " + expr2str(re) + ")"
-        VnemoApp(ae, ie): "(app(" + expr2str(ae) + ", " + expr2str(ie) + "))"
-        VnemoUpd(ae, ie, ve): "(upd(" + expr2str(ae) + ", " + expr2str(ie) + ", " + expr2str(ve) + "))"
-        VnemoConst(v): i2s(v)
-        VnemoVar(name): name
+        VnemoBinOp(op, le, re): "(" + expr2str(le) + " " + op + " " + expr2str(re) + ")";
+        VnemoApp(ae, ie): "(app(" + expr2str(ae) + ", " + expr2str(ie) + "))";
+        VnemoUpd(ae, ie, ve): "(upd(" + expr2str(ae) + ", " + expr2str(ie) + ", " + expr2str(ve) + "))";
+        VnemoConst(v): i2s(v);
+        VnemoVar(name): name;
     }
 }
 

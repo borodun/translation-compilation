@@ -9,7 +9,7 @@ export {
     NemoCond(op: string, le: NemoExpr, re: NemoExpr);
     NemoSeq(o: [NemoOper]);
     NemoPrint(e: NemoExpr);
-    NemoAssign(var: NemoVar, val: NemoExpr);
+    NemoAssign(v: NemoVar, val: NemoExpr);
     NemoChoice(o: [NemoOper]);
     NemoLoop(o: NemoOper);
 
@@ -60,7 +60,7 @@ whileSemanticAct(xs: [flow]) -> NemoSeq {
 }
 
 str2nemoProg(s: string) -> Maybe<NemoProg> {
-    pegActions = {
+    pegActs = {
         t1 = setTree(defaultPegActions.t, "seqSemanticAct", seqSemanticAct);
         t2 = setTree(t1, "ifSemanticAct", ifSemanticAct);
         t3 = setTree(t2, "ifelseSemanticAct", ifelseSemanticAct);
@@ -68,7 +68,7 @@ str2nemoProg(s: string) -> Maybe<NemoProg> {
         SemanticActions(t4);
     }
     gram = "#include nemo/nemo.lingo";
-    result = parsic3(compilePegGrammar(gram), s, pegActions, NemoProg([NemoVarDecl("x", NemoIntType())], NemoAssign(NemoVar("x"), NemoConst(0))));
+    result = parsic3(compilePegGrammar(gram), s, pegActs, NemoProg([NemoVarDecl("x", NemoIntType())], NemoAssign(NemoVar("x"), NemoConst(0))));
     if (result.third == "") {
         Some(result.first);
     }
@@ -80,29 +80,29 @@ str2nemoProg(s: string) -> Maybe<NemoProg> {
 
 nemoType2str(t: NemoType) -> string {
     switch(t) {
-        NemoIntType(): "int"
-        NemoArrayType(next): "[" + nemoType2str(next) + "]"
+        NemoIntType(): "int";
+        NemoArrayType(next): "[" + nemoType2str(next) + "]";
     }
 }
 
 nemoExpr2str(e: NemoExpr) -> string {
     switch(e) {
-        NemoBinOp(op, le, re): "(" + nemoExpr2str(le) + op + nemoExpr2str(re) + ")"
-        NemoApp(arr, idx): "app(" + nemoExpr2str(arr) + "," + nemoExpr2str(idx) + ")"
-        NemoUpd(arr, idx, val): "upd(" + nemoExpr2str(arr) + "," + nemoExpr2str(idx) + "," + nemoExpr2str(val) + ")"
-        NemoConst(v): i2s(v)
-        NemoVar(name): name
+        NemoBinOp(op, le, re): "(" + nemoExpr2str(le) + op + nemoExpr2str(re) + ")";
+        NemoApp(arr, idx): "app(" + nemoExpr2str(arr) + "," + nemoExpr2str(idx) + ")";
+        NemoUpd(arr, idx, val): "upd(" + nemoExpr2str(arr) + "," + nemoExpr2str(idx) + "," + nemoExpr2str(val) + ")";
+        NemoConst(v): i2s(v);
+        NemoVar(name): name;
     }
 }
 
 nemoOper2str(o: NemoOper) -> string {
     switch(o) {
-        NemoCond(op, l, r): "(" + nemoExpr2str(l) + " " + op + " " + nemoExpr2str(r) + ")?"
-        NemoPrint(e): "print(" + nemoExpr2str(e) + ")"
-        NemoAssign(var, val): "(" + nemoExpr2str(var) + " = " + nemoExpr2str(val) + ")"
-        NemoLoop(l): nemoOper2str(l) + "*"
-        NemoSeq(s): "{" + fold(s, "", \ acc, v -> acc + "; " + nemoOper2str(v)) + "}"
-        NemoChoice(c): "{" + fold(c, "", \ acc, v -> acc + " U " + nemoOper2str(v)) + "}"
+        NemoCond(op, l, r): "(" + nemoExpr2str(l) + " " + op + " " + nemoExpr2str(r) + ")?";
+        NemoPrint(e): "print(" + nemoExpr2str(e) + ")";
+        NemoAssign(var, val): "(" + nemoExpr2str(var) + " = " + nemoExpr2str(val) + ")";
+        NemoLoop(l): nemoOper2str(l) + "*";
+        NemoSeq(s): "{" + fold(s, "", \ acc, v -> acc + "; " + nemoOper2str(v)) + "}";
+        NemoChoice(c): "{" + fold(c, "", \ acc, v -> acc + " U " + nemoOper2str(v)) + "}";
     }
 }
 

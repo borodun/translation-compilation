@@ -12,15 +12,15 @@ operMaxLabel(oper: VnemoOper) -> int {
                 max(if(length(ll) == 0) { 0 }
                     else { fold(ll, ll[0].val, \ acc, v -> max(acc, v.val)) },
                     if(length(lr) == 0) { 0 }
-                    else { fold(lr, lr[0].val, \ acc, v -> max(acc, v.val)) }))
+                    else { fold(lr, lr[0].val, \ acc, v -> max(acc, v.val)) }));
         VnemoPrint(lab, e, labels):
             max(lab, 
                 if(length(labels) == 0) { 0 }
-                else { fold(labels, labels[0].val, \ acc, v -> max(acc, v.val)) })
+                else { fold(labels, labels[0].val, \ acc, v -> max(acc, v.val)) });
         VnemoAssign(lab, var, val, labels):
             max(lab, 
                 if(length(labels) == 0) { 0 }
-                else { fold(labels, labels[0].val, \ acc, v -> max(acc, v.val)) })
+                else { fold(labels, labels[0].val, \ acc, v -> max(acc, v.val)) });
     }
 }
 
@@ -36,18 +36,18 @@ operShiftLabels(oper: VnemoOper, n: int) -> VnemoOper {
                         if(length(ll) == 0) { ll }
                         else { map(ll, \ v -> VnemoLabel(v.val + n)) },
                         if(length(lr) == 0) { lr }
-                        else { map(lr, \ v -> VnemoLabel(v.val + n)) })
+                        else { map(lr, \ v -> VnemoLabel(v.val + n)) });
         VnemoPrint(lab, e, labels):
             VnemoPrint(lab + n, 
                         e, 
                         if(length(labels) == 0) { labels }
-                        else { map(labels, \ v -> VnemoLabel(v.val + n)) })
+                        else { map(labels, \ v -> VnemoLabel(v.val + n)) });
         VnemoAssign(lab, var, val, labels): 
             VnemoAssign(lab + n, 
                         var, 
                         val, 
                         if(length(labels) == 0) { labels }
-                        else { map(labels, \ v -> VnemoLabel(v.val + n)) })
+                        else { map(labels, \ v -> VnemoLabel(v.val + n)) });
     }
 }
 
@@ -63,18 +63,18 @@ operChangeLabels(oper: VnemoOper, n: int, l: int) -> VnemoOper {
                         if(length(ll) == 0) { ll }
                         else { map(ll, \ v -> VnemoLabel(if(v.val == l) n else v.val)) },
                         if(length(lr) == 0) { lr }
-                        else { map(lr, \ v -> VnemoLabel(if(v.val == l) n else v.val)) })
+                        else { map(lr, \ v -> VnemoLabel(if(v.val == l) n else v.val)) });
         VnemoPrint(lab, e, labels):
             VnemoPrint(if(lab == l) n else lab, 
                         e,
                         if(length(labels) == 0) { labels }
-                        else { map(labels, \ v -> VnemoLabel(if(v.val == l) n else v.val)) })
+                        else { map(labels, \ v -> VnemoLabel(if(v.val == l) n else v.val)) });
         VnemoAssign(lab, var, val, labels): 
             VnemoAssign(if(lab == l) n else lab, 
                         var, 
                         val,
                         if(length(labels) == 0) { labels }
-                        else { map(labels, \ v -> VnemoLabel(if(v.val == l) n else v.val)) })
+                        else { map(labels, \ v -> VnemoLabel(if(v.val == l) n else v.val)) });
     }
 }
 
@@ -84,43 +84,43 @@ changeLabels(opers: [VnemoOper], n: int, l: int) -> [VnemoOper] {
 
 nemoType2VnemoType(type: NemoType) -> VnemoType {
     switch(type) {
-        NemoIntType(): VnemoIntType()
-        NemoArrayType(t): VnemoArrayType(nemoType2VnemoType(t))
+        NemoIntType(): VnemoIntType();
+        NemoArrayType(t): VnemoArrayType(nemoType2VnemoType(t));
     }
 }
 
 nemoExpr2VnemoExpr(e: NemoExpr) -> VnemoExpr {
     switch(e) {
-        NemoBinOp(op, le, re): VnemoBinOp(op, nemoExpr2VnemoExpr(le), nemoExpr2VnemoExpr(re))
-        NemoApp(arr, idx): VnemoApp(nemoExpr2VnemoExpr(arr), nemoExpr2VnemoExpr(idx))
-        NemoUpd(arr, idx, val): VnemoUpd(nemoExpr2VnemoExpr(arr), nemoExpr2VnemoExpr(idx), nemoExpr2VnemoExpr(val))
-        NemoConst(val): VnemoConst(val)
-        NemoVar(name): VnemoVar(name)
+        NemoBinOp(op, le, re): VnemoBinOp(op, nemoExpr2VnemoExpr(le), nemoExpr2VnemoExpr(re));
+        NemoApp(arr, idx): VnemoApp(nemoExpr2VnemoExpr(arr), nemoExpr2VnemoExpr(idx));
+        NemoUpd(arr, idx, val): VnemoUpd(nemoExpr2VnemoExpr(arr), nemoExpr2VnemoExpr(idx), nemoExpr2VnemoExpr(val));
+        NemoConst(val): VnemoConst(val);
+        NemoVar(name): VnemoVar(name);
     }
 }
 
 nemoOpers2VnemoOpers(oper: NemoOper) -> [VnemoOper] {
     switch(oper) {
-        NemoAssign(var, val): [VnemoAssign(0, VnemoVar(var.name), nemoExpr2VnemoExpr(val), [VnemoLabel(1)])]
-        NemoCond(op, le, re): [VnemoIfElse(0, VnemoCond(op, nemoExpr2VnemoExpr(le), nemoExpr2VnemoExpr(re)), [VnemoLabel(1)], [])]
+        NemoAssign(var, val): [VnemoAssign(0, VnemoVar(var.name), nemoExpr2VnemoExpr(val), [VnemoLabel(1)])];
+        NemoCond(op, le, re): [VnemoIfElse(0, VnemoCond(op, nemoExpr2VnemoExpr(le), nemoExpr2VnemoExpr(re)), [VnemoLabel(1)], [])];
         NemoSeq(o): fold(tail(o), nemoOpers2VnemoOpers(o[0]), \ acc, v -> {
-            concat(acc, shiftLabels(nemoOpers2VnemoOpers(v), maxLabel(acc)))
-        })
+            concat(acc, shiftLabels(nemoOpers2VnemoOpers(v), maxLabel(acc)));
+        });
         NemoChoice(o): fold(tail(o), nemoOpers2VnemoOpers(o[0]), \ acc, v -> {
             newAcc = shiftLabels(acc, 1);
             newAccEnd = maxLabel(newAcc);
             newV = shiftLabels(nemoOpers2VnemoOpers(v), newAccEnd);
             newVEnd = maxLabel(newV);
             concat3([VnemoIfElse(0, VnemoCond("==", VnemoConst(0), VnemoConst(0)), [VnemoLabel(1), VnemoLabel(newAccEnd)], [])],
-                changeLabels(newAcc, newVEnd, newAccEnd), newV)
-        })
+                changeLabels(newAcc, newVEnd, newAccEnd), newV);
+        });
         NemoLoop(o): {
             newO = shiftLabels(nemoOpers2VnemoOpers(o), 1);
             newOEnd = maxLabel(newO);
             concat([VnemoIfElse(0, VnemoCond("==", VnemoConst(0), VnemoConst(0)), [VnemoLabel(1), VnemoLabel(newOEnd)], [])],
-                changeLabels(newO, 0, newOEnd))
+                changeLabels(newO, 0, newOEnd));
         }
-        NemoPrint(e): [VnemoPrint(0, nemoExpr2VnemoExpr(e), [VnemoLabel(1)])]
+        NemoPrint(e): [VnemoPrint(0, nemoExpr2VnemoExpr(e), [VnemoLabel(1)])];
     }
 }
 
